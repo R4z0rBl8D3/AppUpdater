@@ -115,7 +115,7 @@ namespace AppUpdater
                 }
                 if (File.Exists(startupPath + "Startup.txt"))
                 {
-                    using (StreamReader sr = new StreamReader(startupPath + "\\Startup.txt"))
+                    using (StreamReader sr = new StreamReader(app + "\\Startup.txt"))
                     {
                         string start = sr.ReadLine();
                         if (File.Exists(start))
