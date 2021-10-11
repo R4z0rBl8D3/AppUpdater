@@ -32,6 +32,7 @@ namespace AppUpdater
 
         private async void onLoad(object sender, RoutedEventArgs e)
         {
+            StatusLbl.Content = "Loading...";
             if (!File.Exists("Update.txt"))
             {
                 MessageBox.Show("Update failed!");
@@ -40,24 +41,52 @@ namespace AppUpdater
             }
             try
             {
-                StatusLbl.Content = "Deleting files...";
                 ProgressBar.IsIndeterminate = true;
                 string app = Directory.GetParent(startupPath).ToString();
+                StatusLbl.Content = "Reading data...";
+                string link = null;
+                List<string> ignore = new List<string>();
+                using (StreamReader sr = new StreamReader("Update.txt"))
+                {
+                    string line = sr.ReadLine();
+                    link = line;
+                    line = sr.ReadLine();
+                    while (line != null)
+                    {
+                        ignore.Add(line);
+                        line = sr.ReadLine();
+                    }
+                }
+                StatusLbl.Content = "Deleting files...";
                 foreach (string file in Directory.GetFiles(app))
                 {
-                    File.Delete(file);
+                    bool delete = true;
+                    foreach (string check in ignore)
+                    {
+                        if (file == app + "\\" + check)
+                        {
+                            delete = false;
+                        }
+                    }
+                    if (delete)
+                    {
+                        File.Delete(file);
+                    }
                 }
                 foreach (string dir in Directory.GetDirectories(app))
                 {
-                    if (dir != startupPath)
+                    bool delete = true;
+                    foreach (string check in ignore)
+                    {
+                        if (dir == app + "\\" + check)
+                        {
+                            delete = false;
+                        }
+                    }
+                    if (dir != startupPath && delete)
                     {
                         Directory.Delete(dir, true);
                     }
-                }
-                string link = null;
-                using (StreamReader sr = new StreamReader("Update.txt"))
-                {
-                    link = sr.ReadLine();
                 }
                 ProgressBar.IsIndeterminate = false;
                 using (WebClient wc = new WebClient())
@@ -79,11 +108,12 @@ namespace AppUpdater
                 {
                     File.Delete("Log.txt");
                 }
-                File.Create("Log.txt");
+                File.Create("Log.txt").Close();
                 using (StreamWriter sw = new StreamWriter("Log.txt"))
                 {
                     sw.WriteLine("Successful");
                 }
+                this.Close();
             }
             catch (Exception ex)
             {
@@ -98,6 +128,7 @@ namespace AppUpdater
                 {
                     sw.WriteLine("Failed");
                 }
+                this.Close();
             }
         }
         void wc_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
