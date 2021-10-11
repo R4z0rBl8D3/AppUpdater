@@ -120,7 +120,15 @@ namespace AppUpdater
                         string start = sr.ReadLine();
                         if (File.Exists(app + "\\" + start))
                         {
-                            Process.Start(app + "\\" + start);
+                            MessageBoxResult messageResult = MessageBox.Show("Do you want to start the program?", "Restart?", MessageBoxButton.YesNo);
+                            if (messageResult == MessageBoxResult.Yes)
+                            {
+                                Process.Start(app + "\\" + start);
+                            }
+                            else if (messageResult == MessageBoxResult.No)
+                            {
+                                return;
+                            }
                         }
                     }
                 }
