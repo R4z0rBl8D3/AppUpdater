@@ -38,10 +38,10 @@ namespace AppUpdater
         private async void onLoad(object sender, RoutedEventArgs e)
         {
             StatusLbl.Content = "Loading...";
+            ProgressBar.IsIndeterminate = true;
             await Task.Delay(3000);
             try
             {
-                ProgressBar.IsIndeterminate = true;
                 string app = Directory.GetParent(startupPath).ToString();
                 StatusLbl.Content = "Reading data...";
                 string link = null;
