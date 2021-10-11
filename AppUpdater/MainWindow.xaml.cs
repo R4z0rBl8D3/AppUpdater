@@ -118,9 +118,9 @@ namespace AppUpdater
                     using (StreamReader sr = new StreamReader(app + "\\Startup.txt"))
                     {
                         string start = sr.ReadLine();
-                        if (File.Exists(start))
+                        if (File.Exists(app + start))
                         {
-                            Process.Start(start);
+                            Process.Start(app + start);
                         }
                     }
                 }
