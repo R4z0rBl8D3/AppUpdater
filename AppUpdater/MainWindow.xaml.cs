@@ -58,7 +58,7 @@ namespace AppUpdater
                         line = sr.ReadLine();
                     }
                 }
-                await Task.Delay(1000);
+                await Task.Delay(3000);
                 StatusLbl.Content = "Deleting files...";
                 foreach (string file in Directory.GetFiles(app))
                 {
