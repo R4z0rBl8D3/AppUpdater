@@ -15,6 +15,7 @@ using System.Windows.Shapes;
 using System.IO;
 using System.Net;
 using System.IO.Compression;
+using System.Diagnostics;
 
 namespace AppUpdater
 {
@@ -57,6 +58,7 @@ namespace AppUpdater
                         line = sr.ReadLine();
                     }
                 }
+                await Task.Delay(1000);
                 StatusLbl.Content = "Deleting files...";
                 foreach (string file in Directory.GetFiles(app))
                 {
@@ -113,6 +115,17 @@ namespace AppUpdater
                 {
                     sw.WriteLine("Successful");
                 }
+                if (File.Exists("Startup.txt"))
+                {
+                    using (StreamReader sr = new StreamReader("Startup.txt"))
+                    {
+                        string start = sr.ReadLine();
+                        if (File.Exists(start))
+                        {
+                            Process.Start(start);
+                        }
+                    }
+                }
                 this.Close();
             }
             catch (Exception ex)
@@ -123,7 +136,7 @@ namespace AppUpdater
                 {
                     File.Delete("Log.txt");
                 }
-                File.Create("Log.txt");
+                File.Create("Log.txt").Close();
                 using (StreamWriter sw = new StreamWriter("Log.txt"))
                 {
                     sw.WriteLine("Failed");
