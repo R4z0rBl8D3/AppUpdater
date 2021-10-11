@@ -28,18 +28,17 @@ namespace AppUpdater
         public MainWindow()
         {
             InitializeComponent();
+            if (!startupPath.Contains("Updater"))
+            {
+                startupPath = startupPath + "\\Updater";
+            }
             Loaded += onLoad;
         }
 
         private async void onLoad(object sender, RoutedEventArgs e)
         {
             StatusLbl.Content = "Loading...";
-            if (!File.Exists("Update.txt"))
-            {
-                MessageBox.Show("Update failed!");
-                this.Hide();
-                return;
-            }
+            await Task.Delay(3000);
             try
             {
                 ProgressBar.IsIndeterminate = true;
@@ -47,7 +46,7 @@ namespace AppUpdater
                 StatusLbl.Content = "Reading data...";
                 string link = null;
                 List<string> ignore = new List<string>();
-                using (StreamReader sr = new StreamReader("Update.txt"))
+                using (StreamReader sr = new StreamReader(startupPath + "\\Update.txt"))
                 {
                     string line = sr.ReadLine();
                     link = line;
@@ -58,7 +57,6 @@ namespace AppUpdater
                         line = sr.ReadLine();
                     }
                 }
-                await Task.Delay(3000);
                 StatusLbl.Content = "Deleting files...";
                 foreach (string file in Directory.GetFiles(app))
                 {
@@ -94,7 +92,7 @@ namespace AppUpdater
                 using (WebClient wc = new WebClient())
                 {
                     wc.DownloadProgressChanged += wc_DownloadProgressChanged;
-                    wc.DownloadFileAsync(new Uri(link), "temp.zip");
+                    wc.DownloadFileAsync(new Uri(link), startupPath + "\\temp.zip");
                 }
                 while (ProgressBar.Value < 100)
                 {
@@ -102,22 +100,22 @@ namespace AppUpdater
                 }
                 ProgressBar.IsIndeterminate = true;
                 StatusLbl.Content = "Extracting files...";
-                ZipFile.ExtractToDirectory("temp.zip", app);
+                ZipFile.ExtractToDirectory(startupPath + "\\temp.zip", app);
                 StatusLbl.Content = "Deleting temporary file...";
-                File.Delete("temp.zip");
+                File.Delete(startupPath + "\\temp.zip");
                 this.Hide();
-                if (File.Exists("Log.txt"))
+                if (File.Exists(startupPath + "\\Log.txt"))
                 {
-                    File.Delete("Log.txt");
+                    File.Delete(startupPath + "\\Log.txt");
                 }
-                File.Create("Log.txt").Close();
-                using (StreamWriter sw = new StreamWriter("Log.txt"))
+                File.Create(startupPath + "\\Log.txt").Close();
+                using (StreamWriter sw = new StreamWriter(startupPath + "\\Log.txt"))
                 {
                     sw.WriteLine("Successful");
                 }
-                if (File.Exists("Startup.txt"))
+                if (File.Exists(startupPath + "Startup.txt"))
                 {
-                    using (StreamReader sr = new StreamReader("Startup.txt"))
+                    using (StreamReader sr = new StreamReader(startupPath + "\\Startup.txt"))
                     {
                         string start = sr.ReadLine();
                         if (File.Exists(start))
@@ -132,11 +130,11 @@ namespace AppUpdater
             {
                 MessageBox.Show("Update failed!" + Environment.NewLine + ex.Message);
                 this.Hide();
-                if (File.Exists("Log.txt"))
+                if (File.Exists(startupPath + "\\Log.txt"))
                 {
-                    File.Delete("Log.txt");
+                    File.Delete(startupPath + "\\Log.txt");
                 }
-                File.Create("Log.txt").Close();
+                File.Create(startupPath + "\\Log.txt").Close();
                 using (StreamWriter sw = new StreamWriter("Log.txt"))
                 {
                     sw.WriteLine("Failed");
