@@ -25,6 +25,7 @@ namespace AppUpdater
     public partial class MainWindow : Window
     {
         public static string startupPath = Environment.CurrentDirectory;
+        public static int rercursiveCheck = 0;
         public MainWindow()
         {
             InitializeComponent();
@@ -37,12 +38,14 @@ namespace AppUpdater
 
         private async void onLoad(object sender, RoutedEventArgs e)
         {
+            string cTask = "waiting";
             StatusLbl.Content = "Loading...";
             ProgressBar.IsIndeterminate = true;
             await Task.Delay(3000);
             try
             {
                 string app = Directory.GetParent(startupPath).ToString();
+                cTask = "reading data";
                 StatusLbl.Content = "Reading data...";
                 string link = null;
                 List<string> ignore = new List<string>();
@@ -57,7 +60,11 @@ namespace AppUpdater
                         line = sr.ReadLine();
                     }
                 }
-                StatusLbl.Content = "Deleting files...";
+                cTask = "deleting/creating backup folder";
+                if (Directory.Exists(startupPath + "\\Backup")) { Directory.Delete(startupPath + "\\Backup", true); }
+                Directory.CreateDirectory(startupPath + "\\Backup");
+                cTask = "moving files to backup folder";
+                StatusLbl.Content = "Creating backup of app...";
                 foreach (string file in Directory.GetFiles(app))
                 {
                     bool delete = true;
@@ -70,7 +77,7 @@ namespace AppUpdater
                     }
                     if (delete)
                     {
-                        File.Delete(file);
+                        File.Move(file, startupPath + "\\Backup\\" + file.Split('\\')[file.Split('\\').Length - 1]);
                     }
                 }
                 foreach (string dir in Directory.GetDirectories(app))
@@ -85,10 +92,11 @@ namespace AppUpdater
                     }
                     if (dir != startupPath && delete)
                     {
-                        Directory.Delete(dir, true);
+                        Directory.Move(dir, startupPath + "\\Backup\\" + dir.Split('\\')[dir.Split('\\').Length - 1]);
                     }
                 }
                 ProgressBar.IsIndeterminate = false;
+                cTask = "downloading zip file";
                 using (WebClient wc = new WebClient())
                 {
                     wc.DownloadProgressChanged += wc_DownloadProgressChanged;
@@ -99,10 +107,16 @@ namespace AppUpdater
                     await Task.Delay(100);
                 }
                 ProgressBar.IsIndeterminate = true;
+                cTask = "extracting zip file";
                 StatusLbl.Content = "Extracting files...";
                 ZipFile.ExtractToDirectory(startupPath + "\\temp.zip", app);
+                cTask = "deleting zip file";
                 StatusLbl.Content = "Deleting temporary file...";
                 File.Delete(startupPath + "\\temp.zip");
+                cTask = "deleting backup file";
+                StatusLbl.Content = "Deleting backup files...";
+                Directory.Delete(startupPath + "\\Backup", true);
+                cTask = "creating log file";
                 this.Hide();
                 if (File.Exists(startupPath + "\\Log.txt"))
                 {
@@ -113,22 +127,14 @@ namespace AppUpdater
                 {
                     sw.WriteLine("Successful");
                 }
-                if (File.Exists(startupPath + "Startup.txt"))
+                if (File.Exists(startupPath + "\\Startup.txt"))
                 {
-                    using (StreamReader sr = new StreamReader(app + "\\Startup.txt"))
+                    using (StreamReader sr = new StreamReader(startupPath + "\\Startup.txt"))
                     {
                         string start = sr.ReadLine();
                         if (File.Exists(app + "\\" + start))
                         {
-                            MessageBoxResult messageResult = MessageBox.Show("Do you want to start the program?", "Restart?", MessageBoxButton.YesNo);
-                            if (messageResult == MessageBoxResult.Yes)
-                            {
-                                Process.Start(app + "\\" + start);
-                            }
-                            else if (messageResult == MessageBoxResult.No)
-                            {
-                                return;
-                            }
+                            Process.Start(app + "\\" + start);
                         }
                     }
                 }
@@ -136,7 +142,7 @@ namespace AppUpdater
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Update failed!" + Environment.NewLine + ex.Message);
+                MessageBox.Show("Update failed! Current Task: " + cTask + Environment.NewLine + ex.Message);
                 this.Hide();
                 if (File.Exists(startupPath + "\\Log.txt"))
                 {
@@ -147,6 +153,7 @@ namespace AppUpdater
                 {
                     sw.WriteLine("Failed");
                 }
+                
                 this.Close();
             }
         }
